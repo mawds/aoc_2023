@@ -1,6 +1,5 @@
 import re
 
-
 #infile = "day03/data/example.txt"
 
 infile = "day03/data/day03.txt"
