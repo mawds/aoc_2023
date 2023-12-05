@@ -1,8 +1,8 @@
 import re
-import itertools
+from itertools import tee
 from collections import deque
 
-#infile = "day05/data/example.txt"
+# infile = "day05/data/example.txt"
 infile = "day05/data/day05.txt"
 
 with open(infile) as f:
@@ -60,22 +60,47 @@ for i in indata[2:]:
     if len(i) == 0:
         if len(this_map_data[0]) > 0:
             maps.append(XtoYMap(this_map_data))
-            print(maps[-1])
             this_map_data = []
+
+maps = {m.get_source(): m for m in maps}
+
+cache = {}
+
+
+def get_target_location(s, maps, cache):
+    try:
+        target_value = cache[s]
+
+    except KeyError:
+        source = "seed"
+        original_s = s
+        while source != "location":
+            # map = [m for m in maps if m.get_source() == source][0]
+            map = maps[source]
+            target_value = map.get_target(s)
+            next_target_type = map.get_target_map()
+            source = next_target_type
+            s = target_value
+
+        cache[original_s] = target_value
+
+    return target_value
 
 
 locations = []
-for s in seeds:
-    print(s, ": ", end="")
-    source = "seed"
-    while source != "location":
-        map = [m for m in maps if m.get_source() == source][0]
-        target_value = map.get_target(s)
-        next_target_type = map.get_target_map()
-        source = next_target_type
-        s = target_value
 
+for s in seeds:
+    target_value = get_target_location(s, maps, cache)
     locations.append(target_value)
-    print(target_value)
 
 print(f"Part 1: {min(locations)}")
+
+
+locations_2 = []
+
+for start_of_range, length_of_range in zip(seeds[::2], seeds[1::2]):
+    print(start_of_range, length_of_range)
+    for s in range(start_of_range, start_of_range + length_of_range + 1):
+        locations_2.append(get_target_location(s, maps, cache))
+
+print(f"Part 2: {min(locations_2)}")
