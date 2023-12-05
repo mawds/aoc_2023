@@ -1,6 +1,6 @@
 import re
-from itertools import tee
-from collections import deque
+import sys
+from math import floor
 
 # infile = "day05/data/example.txt"
 infile = "day05/data/day05.txt"
@@ -75,7 +75,6 @@ def get_target_location(s, maps):
         source = next_target_type
         s = target_value
 
-
     return target_value
 
 
@@ -88,11 +87,53 @@ for s in seeds:
 print(f"Part 1: {min(locations)}")
 
 
-locations_2 = []
+min_location = sys.maxsize
+
+# This is horrendously slow
+# for start_of_range, length_of_range in zip(seeds[::2], seeds[1::2]):
+#     print(start_of_range, length_of_range)
+#     for s in range(start_of_range, start_of_range + length_of_range + 1):
+#         locations_2.append(get_target_location(s, maps))
+
+
+def get_min_in_span(start_of_range, end_of_range, maps, min_location):
+    # Need to keep splitting the range until we get the difference in
+    # location equal to span
+    # Then return minimum in that span (which will be the answer for the first
+    # element).
+    # Then work on remaining part of span
+
+    if start_of_range > end_of_range:
+        raise ValueError("start range after end range")
+
+    span = end_of_range - start_of_range
+    start_target = get_target_location(start_of_range, maps)
+    end_target = get_target_location(end_of_range, maps)
+    difference = end_target - start_target
+
+    # print(
+    #     f"Going from {start_of_range} to {end_of_range}, span: {span}, diff: {difference}"
+    # )
+
+    if difference == span:
+        min_location = min(min_location, start_target)
+        return min_location
+    elif span <= 1:
+        return min(start_target, end_target, min_location)
+    else:
+        new_end = start_of_range + floor(span / 2)
+        
+        min_location = get_min_in_span(start_of_range, new_end, maps, min_location)
+        min_location2 = get_min_in_span(new_end, end_of_range, maps, min_location)
+        return min(min_location, min_location2)
 
 for start_of_range, length_of_range in zip(seeds[::2], seeds[1::2]):
-    print(start_of_range, length_of_range)
-    for s in range(start_of_range, start_of_range + length_of_range + 1):
-        locations_2.append(get_target_location(s, maps))
+    end_of_range = start_of_range + length_of_range + 1
+    # print(
+    #     f"Working on: Start: {start_of_range}, End: {end_of_range}, length: {length_of_range}"
+    # )
+    min_location = get_min_in_span(start_of_range, end_of_range, maps, min_location)
 
-print(f"Part 2: {min(locations_2)}")
+    # break  # for debug - just first pair
+
+print(f"Part 2: {min_location}")
