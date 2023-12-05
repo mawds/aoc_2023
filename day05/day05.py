@@ -2,8 +2,8 @@ import re
 import itertools
 from collections import deque
 
-infile = "day05/data/example.txt"
-#infile = "day05/data/day05.txt"
+#infile = "day05/data/example.txt"
+infile = "day05/data/day05.txt"
 
 with open(infile) as f:
     indata = f.readlines()
@@ -19,27 +19,27 @@ class XtoYMap:
         self.x = header_data[1]
         self.y = header_data[2]
 
-        self.mapping = {}
+        self.mapping = []
         for m in map_data[1:]:
             if m == "":
                 break
             target, source, span = [int(i) for i in m.split(" ")]
-            span = span
-            for r in range(span):
-                self.mapping[source] = target
-                target += 1
-                source += 1
+
+            map = {"source_min": source, "source_max": source + span, "target": target}
+
+            self.mapping.append(map)
 
     def __str__(self):
         return f"{self.x} to {self.y}:"
 
     def get_target(self, s):
-        try:
-            t = self.mapping[s]
-        except KeyError:
-            t = s
-        finally:
-            return t
+        t = s
+        for m in self.mapping:
+            if m["source_min"] <= s < m["source_max"]:
+                offset = s - m["source_min"]
+                t = m["target"] + offset
+
+        return t
 
     def get_target_map(self):
         return self.y
@@ -50,7 +50,6 @@ class XtoYMap:
     def print_mapping(self):
         for i in range(100):
             print(i, self.get_target(i))
-        
 
 
 # Load in the maps
@@ -63,6 +62,7 @@ for i in indata[2:]:
             maps.append(XtoYMap(this_map_data))
             print(maps[-1])
             this_map_data = []
+
 
 locations = []
 for s in seeds:
