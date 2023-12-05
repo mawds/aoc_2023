@@ -64,25 +64,17 @@ for i in indata[2:]:
 
 maps = {m.get_source(): m for m in maps}
 
-cache = {}
 
+def get_target_location(s, maps):
+    source = "seed"
+    while source != "location":
+        # map = [m for m in maps if m.get_source() == source][0]
+        map = maps[source]
+        target_value = map.get_target(s)
+        next_target_type = map.get_target_map()
+        source = next_target_type
+        s = target_value
 
-def get_target_location(s, maps, cache):
-    try:
-        target_value = cache[s]
-
-    except KeyError:
-        source = "seed"
-        original_s = s
-        while source != "location":
-            # map = [m for m in maps if m.get_source() == source][0]
-            map = maps[source]
-            target_value = map.get_target(s)
-            next_target_type = map.get_target_map()
-            source = next_target_type
-            s = target_value
-
-        cache[original_s] = target_value
 
     return target_value
 
@@ -90,7 +82,7 @@ def get_target_location(s, maps, cache):
 locations = []
 
 for s in seeds:
-    target_value = get_target_location(s, maps, cache)
+    target_value = get_target_location(s, maps)
     locations.append(target_value)
 
 print(f"Part 1: {min(locations)}")
@@ -101,6 +93,6 @@ locations_2 = []
 for start_of_range, length_of_range in zip(seeds[::2], seeds[1::2]):
     print(start_of_range, length_of_range)
     for s in range(start_of_range, start_of_range + length_of_range + 1):
-        locations_2.append(get_target_location(s, maps, cache))
+        locations_2.append(get_target_location(s, maps))
 
 print(f"Part 2: {min(locations_2)}")
