@@ -1,8 +1,10 @@
 import functools
+import itertools
 from enum import Enum
+import copy
 
-#infile = "day07/data/example.txt"
-#infile = "day07/data/testdata2.txt"
+# infile = "day07/data/example.txt"
+# infile = "day07/data/testdata2.txt"
 infile = "day07/data/day07.txt"
 
 with open(infile) as f:
@@ -16,6 +18,11 @@ card_order_ascending = "23456789TJQKA"
 CARD_VALUES = {}
 for v, c in enumerate(card_order_ascending):
     CARD_VALUES[c] = v
+
+card_order_jacks_wild = "J23456789TQKA"
+CARD_VALUES_JACKS_WILD = {}
+for v, c in enumerate(card_order_jacks_wild):
+    CARD_VALUES_JACKS_WILD[c] = v
 
 
 @functools.total_ordering
@@ -37,9 +44,13 @@ class Handtype(Enum):
 
 @functools.total_ordering
 class Card:
-    def __init__(self, card):
+    def __init__(self, card, *args, **kwargs):
+        try:
+            card_values = kwargs["card_values"]
+        except KeyError:
+            card_values = CARD_VALUES
         self.c = card
-        self.value = CARD_VALUES[self.c]
+        self.value = card_values[self.c]
 
     def __str__(self):
         return self.c
@@ -62,18 +73,18 @@ class Card:
 
 # @functools.total_ordering
 class Hand:
-    def __init__(self, cards, bid):
+    def __init__(self, cards, bid, *args, **kwargs):
         if len(cards) != 5:
             raise ValueError("A hand has 5 cards")
 
         self.cards = []
         for c in cards:
-            self.cards.append(Card(c))
+            self.cards.append(Card(c, *args, **kwargs))
 
         self.bid = int(bid)
 
     def __str__(self):
-        return f"{','.join([c.c for c in self.cards])}, bid: {self.bid}"
+        return f"{','.join([str(c.c + '(' + str(c.value) + ')') for c in self.cards])}, bid: {self.bid}"
 
     def __repr__(self):
         return self.__str__()
@@ -83,6 +94,9 @@ class Hand:
             if i.value != j.value:
                 return False
         return True
+
+    def has_jack(self):
+        return "J" in set([c.c for c in self.cards])
 
     def get_type(self):
         if len(set([c.c for c in self.cards])) == 1:
@@ -115,6 +129,36 @@ class Hand:
 
         return False
 
+    def maximise_type(self):
+        """Change the hand type to the best possible using Jokers"""
+        if not self.has_jack():
+            return
+
+        # All jokers is already a five of a kind
+        # Don't bother testing this one as it slows things down a lot
+        if [c.c for c in self.cards].count("J") == 5:
+            return
+
+        # We'll do this inefficiently and just loop over all possible hands
+        # and set cards to the strongest
+        best_hand = copy.deepcopy(self)
+        test_hand = copy.deepcopy(self)
+        # Get positions of Jacks
+        j_positions = [i for i, x in enumerate(test_hand.cards) if x.c == "J"]
+        # Generate a list of lists of all possible cards at each of the j_positions
+        card_options = [list(card_order_jacks_wild)] * len(j_positions)
+
+        # Test each of them
+        for e in itertools.product(*card_options):
+            for i, p in enumerate(j_positions):
+                test_hand.cards[p].c = e[i]
+                # Don't overwrite the value since we use the original values in comparison
+                # test_hand.cards[p].value = CARD_VALUES_JACKS_WILD[e[i]]
+                if test_hand > best_hand:
+                    best_hand = copy.deepcopy(test_hand)
+
+        self.cards = best_hand.cards.copy()
+
 
 hands = []
 for i in indata:
@@ -126,9 +170,26 @@ hands.sort()
 rank = 1
 total = 0
 for h in hands:
-    # print(h, h.get_type(), rank)
     total += rank * h.bid
     rank += 1
 
 print("Part 1:", total)
-#246795406
+
+# Part 2
+wild_hands = []
+for i in indata:
+    cards, bid = i.split()
+    wild_hands.append(Hand(cards, bid, card_values=CARD_VALUES_JACKS_WILD))
+
+for h in wild_hands:
+    h.maximise_type()
+
+wild_hands.sort()
+
+rank = 1
+total = 0
+for h in wild_hands:
+    total += rank * h.bid
+    rank += 1
+
+print("Part 2:", total)
