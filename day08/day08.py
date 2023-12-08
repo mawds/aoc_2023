@@ -1,4 +1,5 @@
 import re
+import math
 from itertools import cycle
 
 # infile = "day08/data/example_1.txt"
@@ -66,7 +67,6 @@ nodes = [map_nodes[n] for n in map_nodes if map_nodes[n].is_startnode()]
 
 
 def solve_routes(nodes):
-    print(f"Running for {len(nodes)} routes.")
     steps = 0
     for d in cycle(directions):
         for i, n in enumerate(nodes):
@@ -84,4 +84,8 @@ def solve_routes(nodes):
             return steps
 
 
-print("Part 2", solve_routes(nodes))
+# Solve each route in series and use this to figure out when they'll be in sync
+steps = [solve_routes([n]) for n in nodes]
+
+# Lowest common multiple will be when they're all in sync
+print("Part 2", math.lcm(*steps))
