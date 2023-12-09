@@ -1,8 +1,4 @@
-import re
-import math
-from itertools import cycle
-
-infile = "day09/data/example.txt"
+# infile = "day09/data/example.txt"
 infile = "day09/data/data.txt"
 
 with open(infile) as f:
@@ -32,21 +28,28 @@ def get_next_value(s):
     while len(s_stack) > 1:
         to_add = s_stack.pop()[-1]
         s_stack[-1].append(s_stack[-1][-1] + to_add)
-    
+
     return s_stack[0]
+
+
+def get_total(readings):
+    new_readings = []
+    for r in readings:
+        new_readings.append(get_next_value(r))
+
+    total_last_values = 0
+    for n in new_readings:
+        total_last_values += n[-1]
+
+    return total_last_values
 
 
 readings = []
 for i in indata:
     readings.append([int(r) for r in i.split()])
 
-new_readings = []
-for r in readings:
-    new_readings.append(get_next_value(r))
-    
-total_last_values = 0
-for n in new_readings:
-    total_last_values += n[-1]
-    
-print("Part 1", total_last_values)
-    
+print("Part 1", get_total(readings))
+
+rev_readings = [list(reversed(r)) for r in readings]
+
+print("Part 2", get_total(rev_readings))
